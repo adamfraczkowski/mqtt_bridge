@@ -1,5 +1,5 @@
 {
-  "name": "mqtt_bridge",
+  "name": "@adamfraczkowski/mqtt_bridge",
   "version": "1.0.0",
   "description": "MQTT bridge interface",
   "main": "./app.mjs",
@@ -7,6 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "AFraczkowski",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adamfraczkowski/mqtt_bridge"
+  },
   "license": "ISC",
   "dependencies": {
     "mqtt": "^4.3.7",

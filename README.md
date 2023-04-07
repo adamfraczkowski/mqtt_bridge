@@ -6,7 +6,7 @@ A simple package that allows you to create a bridge between mqtt and a serial po
 ## INSTALLATION 
 
 ```
-npm install -g mqtt_bridge
+npm install -g @adamfraczkowski/mqtt_bridge
 ```
 
 ## HOW TO USE
@@ -40,4 +40,3 @@ npm install -g mqtt_bridge
  ```
  mqtt_bridge config <path to your config json file>
  ```
- 
