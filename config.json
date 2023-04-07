@@ -1,0 +1,9 @@
+{
+    "mqttConnectionString":"mqtt://test.mosquitto.org",
+    "mode":"serial",
+    "baud":57600,
+    "port":"COM2",
+    "dataFormat":"hexstring",
+    "inputTopic":"serial2/input",
+    "outputTopic":"serial2/output"
+}

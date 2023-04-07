@@ -1,0 +1,18 @@
+{
+  "name": "mqtt_bridge",
+  "version": "1.0.0",
+  "description": "MQTT bridge interface",
+  "main": "./app.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "AFraczkowski",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^4.3.7",
+    "serialport": "^10.5.0"
+  },
+  "bin": {
+    "mqtt_bridge":"./app.mjs"
+  }
+}
