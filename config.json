@@ -4,6 +4,6 @@
     "baud":57600,
     "port":"COM2",
     "dataFormat":"hexstring",
-    "inputTopic":"serial2/input",
-    "outputTopic":"serial2/output"
+    "inputTopic":"serial-device/input",
+    "outputTopic":"serial-device/output"
 }

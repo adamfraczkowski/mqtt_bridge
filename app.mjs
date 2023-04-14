@@ -47,7 +47,6 @@ function main(config) {
             serialBridge.eventHandler.on("data",(data)=>{
                 if(typeof mqttClient != "undefined") {
                     mqttClient.publish(config.outputTopic,data);
-                    console.log(data);
                 }
             });
         break;
@@ -80,7 +79,6 @@ mqttClient.on('connect', function () {
     switch(config.mode) {
         case "serial":
             if(typeof serialBridge !="undefined" && topic == config.inputTopic) {
-                console.log(typeof message);
                 serialBridge.writeData(message);
             }
         break;
@@ -88,5 +86,4 @@ mqttClient.on('connect', function () {
         default:
             console.log("MODE NOT IMPLEMENTED");
         break;
-    }
-  });
+    }});

@@ -24,6 +24,10 @@ class SerialDriver {
             }
             this.eventHandler.emit("data",parsedData);
         })
+
+        this.portHandler.on("error",(error)=>{
+            throw error;
+        })
     }
 
     writeData(data) {
@@ -38,7 +42,11 @@ class SerialDriver {
                 parsedData = data;
             break;
         }
-        this.portHandler.write(parsedData);
+        this.portHandler.write(parsedData,function(err){
+            if(err) {
+                throw "Error on write "+err.message;
+            }
+        });
     }
 
 }
