@@ -1,6 +1,6 @@
 {
   "name": "@adamfraczkowski/mqtt_bridge",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MQTT bridge interface",
   "main": "./app.mjs",
   "scripts": {
