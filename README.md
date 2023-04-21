@@ -20,8 +20,19 @@ npm install -g @adamfraczkowski/mqtt_bridge
  - dataFormat -  "hexstring" or "raw". In "hexstring" dataformat Buffer bytes from serial are converted to hexstring. Hex string values published to mqtt are converted to buffer,
  - inputTopic - topic for publishing data TO device,
  - outputTopic - Topic where you can receive data from device
+ - commandTopic - Topic where you can send custom command to mqtt bridge. 
 
- Example config file:
+ 2. execute command:
+
+ ```
+ mqtt_bridge config <path to your config json file>
+ ```
+
+## COMMAND LIST
+
+- terminate - command that terminates mqtt bridge. When your device not working well you can try to restart mqtt_bridge executing that command. After that your process manager like  [PM2](https://github.com/Unitech/pm2) can restart your mqtt_bridge process 
+
+ ## Example config file:
 
  ```
  {
@@ -33,10 +44,4 @@ npm install -g @adamfraczkowski/mqtt_bridge
     "inputTopic":"serial-device/input",
     "outputTopic":"serial-device/output"
 }
- ```
-
- 2. execute command:
-
- ```
- mqtt_bridge config <path to your config json file>
  ```

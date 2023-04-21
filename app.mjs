@@ -72,18 +72,36 @@ mqttClient.on('connect', function () {
         console.log("SUBSCRIBED TO INPUT TOPIC "+config.inputTopic);
       }
     })
+
+    mqttClient.subscribe(config.commandTopic, function (err) {
+        if (!err) {
+          console.log("SUBSCRIBED TO COMMAND TOPIC "+config.commandTopic);
+        }
+    })
   })
   
   mqttClient.on('message', function (topic, message) {
     message = message.toString();
-    switch(config.mode) {
-        case "serial":
-            if(typeof serialBridge !="undefined" && topic == config.inputTopic) {
-                serialBridge.writeData(message);
-            }
-        break;
+    if(topic==config.inputTopic) {
+        switch(config.mode) {
+            case "serial":
+                if(typeof serialBridge !="undefined" && topic == config.inputTopic) {
+                    serialBridge.writeData(message);
+                }
+            break;
+    
+            default:
+                console.log("MODE NOT IMPLEMENTED");
+            break;
+        }
+    }
 
-        default:
-            console.log("MODE NOT IMPLEMENTED");
-        break;
-    }});
+    if(topic==config.commandTopic) {
+        switch(message) {
+            case "terminate":
+                console.log("RECEIVED TERMINATE COMMAND...TERMINATING");
+                process.exit(1);
+            break;
+        }
+    }
+});

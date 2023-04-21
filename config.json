@@ -5,5 +5,6 @@
     "port":"COM2",
     "dataFormat":"hexstring",
     "inputTopic":"serial-device/input",
-    "outputTopic":"serial-device/output"
+    "outputTopic":"serial-device/output",
+    "commandTopic":"mqtt-bridge/command"
 }
