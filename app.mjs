@@ -2,12 +2,13 @@
 
 import fs from 'fs';
 import SerialDriver from "./serialDriver.mjs";
+import TerminalDriver from "./terminalDriver.mjs";
 import mqtt from "mqtt";
 
 var config = {};
 var mqttClient = undefined;
 var serialBridge = undefined;
-
+var terminalBridge = undefined;
 
 function loadConfig(loadPath) {
     try {
@@ -51,6 +52,15 @@ function main(config) {
             });
         break;
         
+        case "terminal":
+            terminalBridge = new TerminalDriver("cmd.exe");
+            terminalBridge.eventHandler.on("data",(data)=>{
+                if(typeof mqttClient != "undefined") {
+                    mqttClient.publish(config.outputTopic,data);
+                }
+            });
+        break;
+
         default:
             console.log("MODE NOT IMPLEMENTED");
         break;
@@ -87,6 +97,12 @@ mqttClient.on('connect', function () {
             case "serial":
                 if(typeof serialBridge !="undefined" && topic == config.inputTopic) {
                     serialBridge.writeData(message);
+                }
+            break;
+
+            case "terminal":
+                if(typeof terminalBridge !="undefined" && topic == config.inputTopic) {
+                    terminalBridge.writeData(message);
                 }
             break;
     
