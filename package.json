@@ -1,6 +1,6 @@
 {
   "name": "@adamfraczkowski/mqtt_bridge",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "MQTT bridge interface",
   "main": "./app.mjs",
   "scripts": {
@@ -14,9 +14,10 @@
   "license": "ISC",
   "dependencies": {
     "mqtt": "^4.3.7",
+    "node-pty": "^0.10.1",
     "serialport": "^10.5.0"
   },
   "bin": {
-    "mqtt_bridge":"./app.mjs"
+    "mqtt_bridge": "./app.mjs"
   }
 }

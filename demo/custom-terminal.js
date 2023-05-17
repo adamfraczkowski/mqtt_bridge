@@ -1,9 +1,8 @@
 (function (w) {
-    const mqtt_user = ""
-    const mqtt_passwd = ""
-    const deviceId = "test";
     const mqttUrl = "wss://test.mosquitto.org:8081/mqtt."
-
+    const inputChannel = "";
+    const outputChannel = "";
+    
     const term = new Terminal({
         cursorBlink: true,
         macOptionIsMeta: true,
@@ -15,51 +14,44 @@
     term.loadAddon(fit);
     term.loadAddon(new WebLinksAddon.WebLinksAddon());
     term.loadAddon(new SearchAddon.SearchAddon());
-
     term.open(document.getElementById("terminal"));
     fit.fit();
-    term.resize(15, 50);
-    console.log(`size: ${term.cols} columns, ${term.rows} rows`);
+    term.resize(30, 80);
     fit.fit();
     term.writeln("You can copy with ctrl+shift+x");
     term.writeln("You can paste with ctrl+shift+v");
     term.writeln('Press Enter key to activate the terminal')
     term.onData((data) => {
-        console.log("browser terminal received new data:", data);
         var topicName = "terminal-bridge/input";
         console.log(topicName)
-        mqttc.publish(topicName, JSON.stringify({ input: data }));
+        mqttc.publish(topicName, data);
     });
 
     const mqttc = mqtt.connect(mqttUrl);
     mqttc.subscribe("terminal-bridge/output")
     const status = document.getElementById("status");
 
-    mqttc.on("message", function (topic, payload) {
+    mqttc.on("message", function (topic, data) {
         console.log(topic)
         if (topic == "terminal-bridge/output") {
-            data = JSON.parse(payload);
-            console.log("new output received from server:", data.output);
-            term.write(data.output);
+            term.write(data);
         }
     });
 
     mqttc.on("connect", () => {
         fitToscreen();
-        status.innerHTML =
-            '<span style="background-color: lightgreen;">connected</span>';
+        console.log("CONNECTED")
     });
 
     mqttc.on("disconnect", () => {
-        status.innerHTML =
-            '<span style="background-color: #ff8383;">disconnected</span>';
+        console.log("DISCONNECTED")
     });
 
     function fitToscreen() {
         fit.fit();
-        const dims = { cols: term.cols, rows: term.rows };
+        const dims = { data:{cols: term.cols, rows: term.rows}, cmd:"resize_terminal" };
         console.log("sending new dimensions to server's pty", dims);
-        mqttc.publish("/device/" + deviceId + "/terminal/resize", JSON.stringify(dims));
+        mqttc.publish("mqtt-bridge/command", JSON.stringify(dims));
     }
 
     function debounce(func, wait_ms) {

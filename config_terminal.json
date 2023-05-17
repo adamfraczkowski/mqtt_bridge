@@ -1,7 +1,7 @@
 {
     "mqttConnectionString":"mqtt://test.mosquitto.org",
     "mode":"terminal",
-    "inputTopic":"bridge-driver/input",
-    "outputTopic":"bridge-driver/output",
+    "inputTopic":"terminal-bridge/input",
+    "outputTopic":"terminal-bridge/output",
     "commandTopic":"mqtt-bridge/command"
 }

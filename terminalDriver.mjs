@@ -9,7 +9,7 @@ class TerminalDriver {
         this.ttyHandler = pty.spawn(this.shell, [], {
             name: 'xterm-color',
             cols: 80,
-            rows: 30,shellName,
+            rows: 30,
             cwd: process.env.HOME,
             env: process.env
         });
@@ -25,6 +25,10 @@ class TerminalDriver {
 
     writeData(data) {
         this.ttyHandler.write(data);
+    }
+
+    resize(resizeData) {
+        this.ttyHandler.resize(resizeData.cols,resizeData.rows);
     }
 
 }

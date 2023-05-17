@@ -113,10 +113,16 @@ mqttClient.on('connect', function () {
     }
 
     if(topic==config.commandTopic) {
-        switch(message) {
+        var parsedMessage = JSON.parse(message);
+        switch(parsedMessage.cmd) {
             case "terminate":
                 console.log("RECEIVED TERMINATE COMMAND...TERMINATING");
                 process.exit(1);
+            break;
+
+            case "resize_terminal":
+                terminalBridge.resize(parsedMessage.data);
+                
             break;
         }
     }
