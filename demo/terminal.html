@@ -1,17 +1,128 @@
 <!doctype html>
   <html>
     <head>
-      
+      <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14"></script>
     </head>
     <body>
-      <div id="terminal"></div>
-    
+      <div id="app">
+        <div id="terminal"></div>
+      </div>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.1.0/css/xterm.min.css" />
       <script src="https://cdn.jsdelivr.net/npm/xterm@5.1.0/lib/xterm.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js" integrity="sha512-tc5xpAPaQDl/Uxd7ZVbV66v94Lys0IefMJSdlABPuzyCv0IXmr9TkqEQvZiWKRoXMSlP5YPRwpq2a+v5q2uzMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
       <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.7.0/lib/xterm-addon-fit.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/xterm-addon-search@0.11.0/lib/xterm-addon-search.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.8.0/lib/xterm-addon-web-links.min.js"></script>
-      <script src="custom-terminal.js"></script>
+      
+      <!-- <script src="custom-terminal.js"></script> -->
+
+      <script>
+       
+        var app = new Vue({
+          el:"#app",
+          data() {
+            return {
+              term:undefined,
+              fit:undefined,
+              inputChannel:"terminal-bridge/input",
+              outputChannel:"terminal-bridge/output",
+              commandChannel:"mqtt-bridge/command",
+              mqttClient:undefined,
+              mqttUrl:"ws://broker.hivemq.com:8000/mqtt"
+            }
+          },
+          mounted() {
+            window.addEventListener('resize', this.debounce(this.fitToscreen,60));
+            this.term = new Terminal({
+                cursorBlink: true,
+                macOptionIsMeta: true,
+                scrollback: true,
+            });
+            this.term.attachCustomKeyEventHandler(this.customKeyEventHandler);
+            // https://github.com/xtermjs/xterm.js/issues/2941
+            this.fit = new FitAddon.FitAddon();
+            this.term.loadAddon(this.fit);
+            this.term.loadAddon(new WebLinksAddon.WebLinksAddon());
+            this.term.loadAddon(new SearchAddon.SearchAddon());
+            this.term.open(document.getElementById("terminal"));
+            this.fit.fit();
+            this.term.resize(30, 80);
+            this.fit.fit();
+            this.term.writeln("You can copy with ctrl+shift+x");
+            this.term.writeln("You can paste with ctrl+shift+v");
+            this.term.writeln('Press Enter key to activate the terminal')
+            this.term.onData((data) => {
+                this.mqttClient.publish(this.inputChannel, data);
+            });
+
+            this.mqttClient = mqtt.connect(this.mqttUrl);
+            this.mqttClient.subscribe(this.outputChannel)
+            //const status = document.getElementById("status");
+
+            this.mqttClient.on("message", (topic, data)=> {
+                console.log(topic)
+                if (topic == this.outputChannel) {
+                    this.term.write(data);
+                }
+            });
+
+            this.mqttClient.on("connect", () => {
+                this.fitToscreen();
+                //console.log("CONNECTED")
+            });
+
+            this.mqttClient.on("disconnect", () => {
+                //console.log("DISCONNECTED")
+            });
+
+          },
+          
+          methods:{
+            fitToscreen() {
+                this.fit.fit();
+                var dims = { data:{cols: this.term.cols, rows: this.term.rows}, cmd:"resize_terminal"};
+                this.mqttClient.publish(this.commandChannel, JSON.stringify(dims));
+            },
+
+            debounce(func, wait_ms) {
+                var timeout;
+                return function (...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait_ms);
+                };
+            },
+
+            customKeyEventHandler(e) {
+              if (e.type !== "keydown") {
+                  return true;
+              }
+              if (e.ctrlKey && e.shiftKey) {
+                  const key = e.key.toLowerCase();
+                  if (key === "v") {
+                      // ctrl+shift+v: paste whatever is in the clipboard
+                      navigator.clipboard.readText().then((toPaste) => {
+                          term.writeText(toPaste);
+                      });
+                      return false;
+                  } else if (key === "c" || key === "x") {
+                      // ctrl+shift+x: copy whatever is highlighted to clipboard
+
+                      // 'x' is used as an alternate to 'c' because ctrl+c is taken
+                      // by the terminal (SIGINT) and ctrl+shift+c is taken by the browser
+                      // (open devtools).
+                      // I'm not aware of ctrl+shift+x being used by anything in the terminal
+                      // or browser
+                      var toCopy = term.getSelection();
+                      navigator.clipboard.writeText(toCopy);
+                      term.focus();
+                      return false;
+                  }
+              }
+              return true;
+          },
+        }
+      });
+      </script>
     </body>
   </html>

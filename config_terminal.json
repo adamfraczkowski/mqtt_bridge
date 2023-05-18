@@ -1,5 +1,5 @@
 {
-    "mqttConnectionString":"mqtt://test.mosquitto.org",
+    "mqttConnectionString":"mqtt://broker.hivemq.com",
     "mode":"terminal",
     "inputTopic":"terminal-bridge/input",
     "outputTopic":"terminal-bridge/output",
