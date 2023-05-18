@@ -5,7 +5,7 @@
     </head>
     <body>
       <div id="app">
-        <div id="terminal"></div>
+        <div id="terminal" style="height:95vh;"></div>
       </div>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.1.0/css/xterm.min.css" />
       <script src="https://cdn.jsdelivr.net/npm/xterm@5.1.0/lib/xterm.min.js"></script>
@@ -36,7 +36,7 @@
             this.term = new Terminal({
                 cursorBlink: true,
                 macOptionIsMeta: true,
-                scrollback: true,
+                scrollback: 9999999,
             });
             this.term.attachCustomKeyEventHandler(this.customKeyEventHandler);
             // https://github.com/xtermjs/xterm.js/issues/2941
@@ -80,6 +80,7 @@
           methods:{
             fitToscreen() {
                 this.fit.fit();
+                console.log("REFIT");
                 var dims = { data:{cols: this.term.cols, rows: this.term.rows}, cmd:"resize_terminal"};
                 this.mqttClient.publish(this.commandChannel, JSON.stringify(dims));
             },
