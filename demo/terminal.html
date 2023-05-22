@@ -1,21 +1,47 @@
 <!doctype html>
-  <html>
+  <html style="overflow:hidden;">
     <head>
       <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14"></script>
+
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     </head>
     <body>
-      <div id="app">
-        <div id="terminal" style="height:95vh;"></div>
+      <div id="app">     
+        <div class="notification is-light" style="margin:0" :class="statusClass">
+          <div class="columns">
+            <div class="column is-1">
+              <i v-show="isLoading" class="fa-solid fa-circle-notch fa-spin"></i>
+              <i v-show="isSuccess" class="fa-solid fa-check"></i>
+              <i v-show="isError" class="fa-solid fa-xmark"></i>
+            </div>
+            <div class="column">
+              <div>{{ notifyText }}</div>
+            </div>
+            <div class="column">
+              <button v-show="isError" class=" button is-info" v-on:click="location.reload()">
+                REFRESH
+              </button>
+            </div>
+            <div class="column">
+              <button class=" button is-secondary" v-on:click="openSettings()">
+                <i class="fa-solid fa-cog"></i>
+              </button>
+            </div>
+          </div>
+          
+          
+          
+        </div>
+        <div id="terminal" style="height:90vh;"></div>
       </div>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.1.0/css/xterm.min.css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
       <script src="https://cdn.jsdelivr.net/npm/xterm@5.1.0/lib/xterm.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js" integrity="sha512-tc5xpAPaQDl/Uxd7ZVbV66v94Lys0IefMJSdlABPuzyCv0IXmr9TkqEQvZiWKRoXMSlP5YPRwpq2a+v5q2uzMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
       <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.7.0/lib/xterm-addon-fit.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/xterm-addon-search@0.11.0/lib/xterm-addon-search.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.8.0/lib/xterm-addon-web-links.min.js"></script>
-      
-      <!-- <script src="custom-terminal.js"></script> -->
-
       <script>
        
         var app = new Vue({
@@ -28,10 +54,16 @@
               outputChannel:"terminal-bridge/output",
               commandChannel:"mqtt-bridge/command",
               mqttClient:undefined,
-              mqttUrl:"ws://broker.hivemq.com:8000/mqtt"
+              mqttUrl:"ws://broker.hivemq.com:8000/mqtt",
+              statusClass:"is-primary",
+              notifyText:"Connecting to MQTT broker...",
+              isError:false,
+              isLoading:false,
+              isSuccess:false
             }
           },
           mounted() {
+            this.setStatus("loading","Setting up terminal...");
             window.addEventListener('resize', this.debounce(this.fitToscreen,60));
             this.term = new Terminal({
                 cursorBlink: true,
@@ -48,17 +80,22 @@
             this.fit.fit();
             this.term.resize(30, 80);
             this.fit.fit();
-            this.term.writeln("You can copy with ctrl+shift+x");
-            this.term.writeln("You can paste with ctrl+shift+v");
-            this.term.writeln('Press Enter key to activate the terminal')
             this.term.onData((data) => {
                 this.mqttClient.publish(this.inputChannel, data);
             });
-
+            this.setStatus("loading","connecting to broker: "+this.mqttUrl);
             this.mqttClient = mqtt.connect(this.mqttUrl);
-            this.mqttClient.subscribe(this.outputChannel)
-            //const status = document.getElementById("status");
-
+            this.setStatus("loading","subscribe to channel: "+this.outputChannel);
+            this.mqttClient.subscribe(this.outputChannel,(error)=> {
+              if(error) {
+                this.setStatus("error","error during subscribing to output channel "+this.outputChannel);
+              } else {
+                this.setStatus("success","terminal ready");
+                this.term.writeln("You can copy with ctrl+shift+x");
+                this.term.writeln("You can paste with ctrl+shift+v");
+                this.term.writeln('Press Enter key to activate the terminal')
+              }
+            });
             this.mqttClient.on("message", (topic, data)=> {
                 console.log(topic)
                 if (topic == this.outputChannel) {
@@ -68,16 +105,66 @@
 
             this.mqttClient.on("connect", () => {
                 this.fitToscreen();
-                //console.log("CONNECTED")
             });
 
             this.mqttClient.on("disconnect", () => {
-                //console.log("DISCONNECTED")
+              this.setStatus("error","Broker disconnected");
             });
+
+            this.mqttClient.on("error", () => {
+              this.setStatus("error","Cannot connect to broker");
+            });
+
 
           },
           
           methods:{
+
+            openSettings() {
+
+            },
+
+            setStatus(level,text) {
+              if(typeof this.term !== "undefined") {
+                this.term.writeln(level + " - "+text);
+              }
+              switch(level) {
+                
+                case "error":
+                  this.isLoading = false;
+                  this.isError = true;
+                  this.isSuccess = false;
+                  this.notifyText = text;
+                  this.statusClass = "is-danger";
+                break;
+
+                case "success":
+                  this.isLoading = false;
+                  this.isError = false;
+                  this.isSuccess = true;
+                  this.notifyText = text;
+                  this.statusClass = "is-success";
+                break;
+
+                case "loading":
+                  this.isLoading = true;
+                  this.isError = false;
+                  this.isSuccess = false;
+                  this.notifyText = text;
+                  this.statusClass = "is-warning";
+                break;
+
+                default:
+                  this.isLoading = false;
+                  this.isError = true;
+                  this.isSuccess = false;
+                  this.notifyText = "Loading...";
+                  this.statusClass = "is-warning";
+                break;
+
+              }
+            },
+
             fitToscreen() {
                 this.fit.fit();
                 console.log("REFIT");
