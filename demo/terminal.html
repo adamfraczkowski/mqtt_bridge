@@ -8,21 +8,21 @@
     <body>
       <div id="app">     
         <div class="notification is-light" style="margin:0" :class="statusClass">
-          <div class="columns">
+          <div class="columns is-mobile">
             <div class="column is-1">
               <i v-show="isLoading" class="fa-solid fa-circle-notch fa-spin"></i>
               <i v-show="isSuccess" class="fa-solid fa-check"></i>
               <i v-show="isError" class="fa-solid fa-xmark"></i>
             </div>
-            <div class="column">
+            <div class="column is-2">
               <div>{{ notifyText }}</div>
             </div>
-            <div class="column">
+            <div class="column is-2">
               <button v-show="isError" class=" button is-info" v-on:click="location.reload()">
                 REFRESH
               </button>
             </div>
-            <div class="column">
+            <div class="column is-1">
               <button class=" button is-secondary" v-on:click="openSettings()">
                 <i class="fa-solid fa-cog"></i>
               </button>
@@ -93,7 +93,7 @@
                 this.setStatus("success","terminal ready");
                 this.term.writeln("You can copy with ctrl+shift+x");
                 this.term.writeln("You can paste with ctrl+shift+v");
-                this.term.writeln('Press Enter key to activate the terminal')
+                this.term.writeln("Waiting for pty...");
               }
             });
             this.mqttClient.on("message", (topic, data)=> {
