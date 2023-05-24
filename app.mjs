@@ -8,7 +8,7 @@ import mqtt from "mqtt";
 var config = {};
 var mqttClient = undefined;
 var serialBridge = undefined;
-var terminalBridge = undefined;
+var terminalBridgeObj = {};
 
 function loadConfig(loadPath) {
     try {
@@ -52,57 +52,45 @@ function main(config) {
             });
         break;
         
-        case "terminal":
-            terminalBridge = new TerminalDriver("cmd.exe");
-            terminalBridge.eventHandler.on("data",(data)=>{
-                if(typeof mqttClient != "undefined") {
-                    mqttClient.publish(config.outputTopic,data);
-                }
-            });
-        break;
-
-        default:
-            console.log("MODE NOT IMPLEMENTED");
-        break;
     }
 }
 
 var args = process.argv.slice(2);
 parseCommand(args)
 
-process.on('uncaughtException', function(error) {
-    console.error(error);
-    process.exit(1)
-});
 
 mqttClient.on('connect', function () {
     console.log("CLIENT CONNECTED TO "+config.mqttConnectionString);
-    mqttClient.subscribe(config.inputTopic, function (err) {
-      if (!err) {
-        console.log("SUBSCRIBED TO INPUT TOPIC "+config.inputTopic);
-      }
-    })
-
+    
     mqttClient.subscribe(config.commandTopic, function (err) {
         if (!err) {
           console.log("SUBSCRIBED TO COMMAND TOPIC "+config.commandTopic);
         }
     })
+    
+    if(config.mode=="serial") {
+        mqttClient.subscribe(config.inputTopic, function (err) {
+            if (!err) {
+              console.log("SUBSCRIBED TO INPUT TOPIC "+config.inputTopic);
+            }
+        })
+    }
   })
   
   mqttClient.on('message', function (topic, message) {
     message = message.toString();
-    if(topic==config.inputTopic) {
+    if(topic.includes(config.inputTopic)) {
         switch(config.mode) {
             case "serial":
-                if(typeof serialBridge !="undefined" && topic == config.inputTopic) {
+                if(typeof serialBridge !="undefined") {
                     serialBridge.writeData(message);
                 }
             break;
 
             case "terminal":
-                if(typeof terminalBridge !="undefined" && topic == config.inputTopic) {
-                    terminalBridge.writeData(message);
+                var parsedMessage = JSON.parse(message);
+                if(typeof terminalBridgeObj[parsedMessage.sessionID] !="undefined") {
+                    terminalBridgeObj[parsedMessage.sessionID].writeData(parsedMessage.data);
                 }
             break;
     
@@ -121,9 +109,58 @@ mqttClient.on('connect', function () {
             break;
 
             case "resize_terminal":
-                terminalBridge.resize(parsedMessage.data);
-                
+                try {
+                    terminalBridgeObj[parsedMessage.sessionID].resize(parsedMessage.data);
+                } catch(error) {
+
+                }
+            break;
+
+            case "start_terminal_session":
+                terminalBridgeObj[parsedMessage.sessionID] = new TerminalDriver(config.shell,3600*1000);
+                terminalBridgeObj[parsedMessage.sessionID].eventHandler.on("data",(data)=>{
+                    if(typeof mqttClient != "undefined") {
+                        mqttClient.publish(config.outputTopic+"/"+parsedMessage.sessionID,data);
+                    }
+                });
+
+                terminalBridgeObj[parsedMessage.sessionID].eventHandler.on("session",(data)=>{
+                    try {
+                        terminalBridgeObj[parsedMessage.sessionID].stop();
+                    } catch(error) {
+    
+                    }
+                    if(typeof mqttClient != "undefined") {
+                        mqttClient.publish(config.outputTopic+"/"+parsedMessage.sessionID,"Session expired...");
+                    }
+                });
+
+                mqttClient.subscribe(config.inputTopic+"/"+parsedMessage.sessionID, function (err) {
+                    if (!err) {
+                      console.log("SUBSCRIBED TO INPUT TOPIC "+config.inputTopic+"/"+parsedMessage.sessionID);
+                    }
+                });
+
+                terminalBridgeObj[parsedMessage.sessionID].start();
+            break;
+            
+            case "stop_terminal_session":
+                try {
+                    terminalBridgeObj[parsedMessage.sessionID].stop();
+                } catch(error) {
+
+                }
             break;
         }
     }
+});
+
+mqttClient.on("error",()=>{
+    console.error("Cannot connect to mqtt server");
+    process.exit(1);
+});
+
+process.on('uncaughtException', function(error) {
+    console.error(error);
+    process.exit(1)
 });
