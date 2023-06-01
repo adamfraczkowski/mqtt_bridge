@@ -1,5 +1,5 @@
 {
-    "mqttConnectionString":"mqtt://iot.ilim.poznan.pl:1883",
+    "mqttConnectionString":"mqtt://broker.hivemq.com:1883",
     "mode":"terminal",
     "shell":"cmd.exe",
     "inputTopic":"terminal-bridge/input",

@@ -3,11 +3,14 @@
 import fs from 'fs';
 import SerialDriver from "./serialDriver.mjs";
 import TerminalDriver from "./terminalDriver.mjs";
+import GpioDriver from "./gpioDriver.mjs";
+
 import mqtt from "mqtt";
 
 var config = {};
 var mqttClient = undefined;
 var serialBridge = undefined;
+var gpioBridge = undefined;
 var terminalBridgeObj = {};
 
 function loadConfig(loadPath) {
@@ -51,6 +54,15 @@ function main(config) {
                 }
             });
         break;
+
+        case "gpio":
+            gpioBridge = new GpioDriver(config.gpioConfig);
+            gpioBridge.eventHandler.on("gpio",(data)=>{
+                if(typeof mqttClient != "undefined") {
+                    mqttClient.publish(config.outputTopic,data);
+                }
+            });
+        break;
         
     }
 }
@@ -68,7 +80,7 @@ mqttClient.on('connect', function () {
         }
     })
     
-    if(config.mode=="serial") {
+    if(config.mode=="serial" || config.mode=="gpio") {
         mqttClient.subscribe(config.inputTopic, function (err) {
             if (!err) {
               console.log("SUBSCRIBED TO INPUT TOPIC "+config.inputTopic);
@@ -84,6 +96,13 @@ mqttClient.on('connect', function () {
             case "serial":
                 if(typeof serialBridge !="undefined") {
                     serialBridge.writeData(message);
+                }
+            break;
+
+            case "gpio":
+                var parsedMessage = JSON.parse(message);
+                if(typeof gpioBridge !="undefined") {
+                    gpioBridge.writeData(parsedMessage);
                 }
             break;
 

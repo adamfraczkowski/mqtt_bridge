@@ -1,0 +1,14 @@
+{
+    "mqttConnectionString":"mqtt://broker.hivemq.com:1883",
+    "mode":"gpio",
+    "gpioConfig":[
+        {"pin":15,"dir":"in","pull":"down"},
+        {"pin":16,"dir":"in","pull":"down"},
+        {"pin":7,"dir":"out","pull":"down"},
+        {"pin":8,"dir":"out","pull":"down"},
+        {"pin":9,"dir":"out","pull":"down"}
+    ],
+    "inputTopic":"gpio-bridge/input",
+    "outputTopic":"gpio-bridge/output",
+    "commandTopic":"gpio-bridge/command"
+}
