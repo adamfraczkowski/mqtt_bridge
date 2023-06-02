@@ -59,7 +59,7 @@ function main(config) {
             gpioBridge = new GpioDriver(config.gpioConfig);
             gpioBridge.eventHandler.on("gpio",(data)=>{
                 if(typeof mqttClient != "undefined") {
-                    mqttClient.publish(config.outputTopic,data);
+                    mqttClient.publish(config.outputTopic,JSON.stringify(data));
                 }
             });
         break;

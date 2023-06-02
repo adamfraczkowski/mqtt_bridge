@@ -10,7 +10,9 @@ class gpioDriver {
         this.pinsConfig = pinsConfig;
         this.pinsState = [];
         this.refreshInterval = refreshInterval;
-        this.longpressTime = longpressTime
+        this.longpressTime = longpressTime;
+        this.blinkOffTimeout = undefined;
+        this.blinkRecursiveTimeout = undefined;
 
         for(var i=0;i<this.pinsConfig.length;i++) {
             try {
@@ -47,12 +49,26 @@ class gpioDriver {
     }
 
     async blinkPin(pin,onTime,offTime,times) {
-        for(var i=0;i<times;i++) {
+        this.stopBlink(pin);
+        if(times<=0) {
             this.setPin(pin,"1");
-            await this.sleep(onTime);
-            this.setPin(pin,"0");
-            await this.sleep(offTime);
+            this.blinkOffTimeout = setTimeout(()=>this.setPin(pin,"0"),onTime);
+            this.blinkRecursiveTimeout = setTimeout(()=>this.blinkPin(pin,onTime,offTime,-1),onTime+offTime);
+
+        } else {
+            for(var i=0;i<times;i++) {
+                this.setPin(pin,"1");
+                await this.sleep(onTime);
+                this.setPin(pin,"0");
+                await this.sleep(offTime);
+            }
         }
+    }
+
+    stopBlink(pin) {
+        this.setPin(pin,"0");
+        //if(typeof this.blinkOffTimeout !="undefined") clearTimeout(this.blinkOffTimeout);
+        if(typeof this.blinkRecursiveTimeout !="undefined") clearTimeout(this.blinkRecursiveTimeout);
     }
 
     writeData(msg) {
@@ -71,6 +87,10 @@ class gpioDriver {
 
             case "blinkpin":
                 this.blinkPin(msg.data.pin,msg.data.onTime,msg.data.offTime,msg.data.times);
+            break;
+
+            case "stopblink":
+                this.stopBlink();
             break;
         }
     }
