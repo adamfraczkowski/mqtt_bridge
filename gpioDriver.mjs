@@ -30,6 +30,7 @@ class gpioDriver {
                 });
             }
         }
+        this.start();
 
     }
 
